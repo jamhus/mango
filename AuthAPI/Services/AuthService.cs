@@ -1,0 +1,110 @@
+﻿using AuthAPI.Data;
+using AuthAPI.Models;
+using AuthAPI.Models.Dtos;
+using AuthAPI.Services.Interfaces;
+using Mango.Services.AuthAPI.Services.Interfaces;
+using Microsoft.AspNetCore.Identity;
+using System.Data;
+
+namespace AuthAPI.Services
+{
+    public class AuthService : IAuthService
+    {
+        private readonly AppDbContext _db;
+        private readonly UserManager<ApplicationUser> _userManager;
+        private readonly RoleManager<IdentityRole> _roleManager;
+        private readonly IJwtTokenGenerator _tokenGenerator;
+
+        public AuthService(AppDbContext db, UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager, IJwtTokenGenerator tokenGenerator)
+        {
+            _db = db;
+            _userManager = userManager;
+            _roleManager = roleManager;
+            _tokenGenerator = tokenGenerator;
+        }
+
+        public async Task<bool> AssignRoleAsync(string email, string role)
+        {
+            var user = _db.Users.FirstOrDefault(u => u.Email.ToLower() == email.ToLower());
+            if (user != null)
+            {
+                var roleExist = await _roleManager.RoleExistsAsync(role);
+                if (!roleExist)
+                {
+                    await _roleManager.CreateAsync(new IdentityRole(role));
+                }
+                await _userManager.AddToRoleAsync(user, role);
+                return true;
+            }
+            return false;
+        }
+
+        public async Task<LoginResponseDto> LoginAsync(LoginRequestDto loginRequestDto)
+        {
+            var User = _db.Users.FirstOrDefault(u => u.Email.ToLower() == loginRequestDto.Email.ToLower());
+
+            bool isvalid = await _userManager.CheckPasswordAsync(User, loginRequestDto.Password);
+
+            if (User == null || !isvalid)
+            {
+                return new LoginResponseDto
+                {
+                    User = null,
+                    Token = "",
+
+                };
+            }
+
+            var response = new LoginResponseDto
+            {
+                User = new UserDto
+                {
+                    Id = User.Id,
+                    Name = User.Name,
+                    Email = User.Email,
+                    PhoneNumber = User.PhoneNumber,
+                },
+                Token = _tokenGenerator.CreateToken(User),
+            };
+
+
+            return response;
+        }
+
+        public async Task<string> RegisterAsync(RegistrationRequestDto registrationRequestDto)
+        {
+            ApplicationUser user = new()
+            {
+                UserName = registrationRequestDto.Email,
+                Email = registrationRequestDto.Email,
+                Name = registrationRequestDto.Name,
+                PhoneNumber = registrationRequestDto.PhoneNumber,
+                NormalizedEmail = registrationRequestDto.Email.ToUpper(),
+
+            };
+
+            try
+            {
+                var result = await _userManager.CreateAsync(user, registrationRequestDto.Password);
+                if (result.Succeeded)
+                {
+                    await _userManager.AddToRoleAsync(user, registrationRequestDto.Role);
+
+                    var userToReturn = _db.Users.FirstOrDefault(u => u.Email == registrationRequestDto.Email);
+
+                    return string.Empty;
+
+                }
+                else
+                {
+                    return result.Errors.FirstOrDefault().Description;
+                }
+            }
+            catch (Exception ex)
+            {
+
+                return ex.Message;
+            }
+        }
+    }
+}
