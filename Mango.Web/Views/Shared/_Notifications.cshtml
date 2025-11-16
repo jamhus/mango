@@ -1,20 +1,43 @@
-﻿@if(TempData["Error"] != null)
-{
-    <script src="~/lib/jquery/dist/jquery.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
-    <script type="text/javascript">
-        $(document).ready(function () {
-            toastr.error('@TempData["Error"]');
-        });
-    </script>
+﻿
+@{
+    var error = TempData["Error"];
+    var success = TempData["Success"];
 }
-@if (TempData["Success"] != null)
+
+@if (error != null || success != null)
 {
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" />
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+
     <script type="text/javascript">
-        $(document).ready(function () {
-            toastr.success('@TempData["Success"]');
+        $(function () {
+            toastr.options = {
+                "closeButton": true,
+                "debug": false,
+                "newestOnTop": false,
+                "progressBar": true,
+                "positionClass": "toast-bottom-right",
+                "preventDuplicates": false,
+                "onclick": null,
+                "showDuration": "300",
+                "hideDuration": "1000",
+                "timeOut": "5000",
+                "extendedTimeOut": "1000",
+                "showEasing": "swing",
+                "hideEasing": "linear",
+                "showMethod": "fadeIn",
+                "hideMethod": "fadeOut"
+            };
+
+            @if (error != null)
+            {
+                <text>toastr.error(@Html.Raw(System.Text.Json.JsonSerializer.Serialize(error.ToString())));</text>
+            }
+            @if (success != null)
+            {
+                <text>toastr.success(@Html.Raw(System.Text.Json.JsonSerializer.Serialize(success.ToString())));</text>
+            }
         });
     </script>
 }

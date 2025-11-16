@@ -54,7 +54,7 @@ namespace AuthAPI.Services
 
                 };
             }
-
+            var roles = await _userManager.GetRolesAsync(User);
             var response = new LoginResponseDto
             {
                 User = new UserDto
@@ -64,33 +64,37 @@ namespace AuthAPI.Services
                     Email = User.Email,
                     PhoneNumber = User.PhoneNumber,
                 },
-                Token = _tokenGenerator.CreateToken(User),
+                Token = _tokenGenerator.CreateToken(User, roles),
             };
 
 
             return response;
         }
 
-        public async Task<string> RegisterAsync(RegistrationRequestDto registrationRequestDto)
+        public async Task<string> RegisterAsync(RegistrationRequestDto model)
         {
             ApplicationUser user = new()
             {
-                UserName = registrationRequestDto.Email,
-                Email = registrationRequestDto.Email,
-                Name = registrationRequestDto.Name,
-                PhoneNumber = registrationRequestDto.PhoneNumber,
-                NormalizedEmail = registrationRequestDto.Email.ToUpper(),
+                UserName = model.Email,
+                Email = model.Email,
+                Name = model.Name,
+                PhoneNumber = model.PhoneNumber,
+                NormalizedEmail = model.Email.ToUpper(),
 
             };
 
             try
             {
-                var result = await _userManager.CreateAsync(user, registrationRequestDto.Password);
+                var result = await _userManager.CreateAsync(user, model.Password);
                 if (result.Succeeded)
                 {
-                    await _userManager.AddToRoleAsync(user, registrationRequestDto.Role);
-
-                    var userToReturn = _db.Users.FirstOrDefault(u => u.Email == registrationRequestDto.Email);
+                    var userToReturn = _db.Users.FirstOrDefault(u => u.Email == model.Email);
+                    var roleExist = await _roleManager.RoleExistsAsync(model.Role);
+                    if (!roleExist)
+                    {
+                        await _roleManager.CreateAsync(new IdentityRole(model.Role));
+                    }
+                    await _userManager.AddToRoleAsync(userToReturn, model.Role);
 
                     return string.Empty;
 
