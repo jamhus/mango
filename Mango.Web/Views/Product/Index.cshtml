@@ -1,4 +1,5 @@
-﻿@model IEnumerable<ProductDto>
+﻿@using System.Globalization
+@model IEnumerable<ProductDto>
 
 <div class="card shadow border-0 mt-4">
 	<div class="card-header bg-secondary bg-gradient ml-0 py-3">
@@ -43,7 +44,7 @@
                             @item.CategoryName
 						</td>
 						<td>
-							@item.Price.ToString("C")
+							@item.Price.ToString("C", CultureInfo.CreateSpecificCulture("en-US"))
 						</td>
 						<td>
 							<a asp-action="Update" asp-route-id="@item.ProductId" class="btn btn-success">
