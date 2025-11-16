@@ -26,9 +26,7 @@
                         <li class="nav-item">
                             <a class="nav-link" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
-                        </li>
+                       
                         @if (User.Identity.IsAuthenticated && User.Claims.Any(c => c.Value == SD.AdminRole))
                         {
                             <li class="nav-item dropdown">
@@ -37,6 +35,9 @@
                                 </a>
                                 <ul class="dropdown-menu">
                                     <li><a class="dropdown-item" asp-controller="Coupon" asp-action="Index">Coupons</a></li>
+                                    <li>
+                                        <a class="dropdown-item" asp-controller="Product" asp-action="Index">Products</a>
+                                    </li>
                                 </ul>
                             </li>
                         }

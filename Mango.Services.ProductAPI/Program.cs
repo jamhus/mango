@@ -1,5 +1,5 @@
-﻿using Mango.Services.CouponAPI.Data;
-using Mango.Services.CouponAPI.Extensions;
+﻿using Mango.Services.ProductAPI.Data;
+using Mango.Services.ProductAPI.Extensions;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
@@ -61,6 +61,7 @@ app.MapControllers();
 ApplyMigrations();
 
 app.Run();
+
 
 void ApplyMigrations()
 {
