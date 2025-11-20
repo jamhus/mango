@@ -1,8 +1,9 @@
-﻿using Mango.Services.ShopingCartAPI.Data;
-using Mango.Services.ShopingCartAPI.Extensions;
-using Mango.Services.ShopingCartAPI.Services;
-using Mango.Services.ShopingCartAPI.Services.Interfaces;
-using Mango.Services.ShopingCartAPI.Utility;
+﻿using Mango.MessageBus;
+using Mango.Services.ShoppingCartAPI.Data;
+using Mango.Services.ShoppingCartAPI.Extensions;
+using Mango.Services.ShoppingCartAPI.Services;
+using Mango.Services.ShoppingCartAPI.Services.Interfaces;
+using Mango.Services.ShoppingCartAPI.Utility;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
@@ -20,6 +21,7 @@ builder.Services.AddAutoMapper(cfg => { }, typeof(Program));
 builder.Services.AddControllers();
 builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<ICouponService, CouponService>();
+builder.Services.AddScoped<IMessageBus, MessageBus>();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<BackendApiAuthHttpClientHandler>();
 

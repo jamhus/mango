@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 
-namespace Mango.Services.ShopingCartAPI.Extensions
+namespace Mango.Services.ShoppingCartAPI.Extensions
 {
     public static class WebApplicationBuilderExtionsions
     {

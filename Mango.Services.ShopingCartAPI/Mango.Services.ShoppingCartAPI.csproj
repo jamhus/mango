@@ -18,5 +18,8 @@
 		<PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="9.0.0" />
 		<PackageReference Include="Swashbuckle.AspNetCore" Version="9.0.3" />
 	</ItemGroup>
+	<ItemGroup>
+	  <ProjectReference Include="..\Mango.MessageBus\Mango.MessageBus.csproj" />
+	</ItemGroup>
 
 </Project>
