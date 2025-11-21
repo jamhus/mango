@@ -2,6 +2,7 @@ using AuthAPI.Data;
 using AuthAPI.Models;
 using AuthAPI.Services;
 using AuthAPI.Services.Interfaces;
+using Mango.MessageBus;
 using Mango.Services.AuthAPI.Services;
 using Mango.Services.AuthAPI.Services.Interfaces;
 using Microsoft.AspNetCore.Identity;
@@ -25,6 +26,7 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.AddScoped<IAuthService,AuthService>();
 builder.Services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
+builder.Services.AddScoped<IMessageBus, MessageBus>();
 
 
 var app = builder.Build();

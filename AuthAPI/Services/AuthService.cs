@@ -2,8 +2,10 @@
 using AuthAPI.Models;
 using AuthAPI.Models.Dtos;
 using AuthAPI.Services.Interfaces;
+using Mango.MessageBus;
 using Mango.Services.AuthAPI.Services.Interfaces;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Configuration;
 using System.Data;
 
 namespace AuthAPI.Services
@@ -14,13 +16,22 @@ namespace AuthAPI.Services
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly RoleManager<IdentityRole> _roleManager;
         private readonly IJwtTokenGenerator _tokenGenerator;
+        private readonly IMessageBus _messageBus;
+        private readonly IConfiguration _configuration;
 
-        public AuthService(AppDbContext db, UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager, IJwtTokenGenerator tokenGenerator)
+        public AuthService(AppDbContext db,
+            UserManager<ApplicationUser> userManager, 
+            RoleManager<IdentityRole> roleManager, 
+            IJwtTokenGenerator tokenGenerator,
+            IMessageBus messageBus,
+            IConfiguration configuration)
         {
             _db = db;
             _userManager = userManager;
             _roleManager = roleManager;
             _tokenGenerator = tokenGenerator;
+            _messageBus = messageBus;
+            _configuration = configuration;
         }
 
         public async Task<bool> AssignRoleAsync(string email, string role)
@@ -95,7 +106,7 @@ namespace AuthAPI.Services
                         await _roleManager.CreateAsync(new IdentityRole(model.Role));
                     }
                     await _userManager.AddToRoleAsync(userToReturn, model.Role);
-
+                    _messageBus.PublishMessage(userToReturn.Email, _configuration.GetValue<string>("TopicAndQueueNames:EmailUserRegisteredQueue"));
                     return string.Empty;
 
                 }
