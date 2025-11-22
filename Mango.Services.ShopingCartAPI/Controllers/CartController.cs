@@ -96,8 +96,8 @@ namespace Mango.Services.ShoppingCartAPI.Controllers
             return _response;
         }
 
-        [HttpPost("RemoveCart")]
-        public async Task<ResponseDto> RemoveCart([FromBody] int cartDetailsId)
+        [HttpPost("RemoveFromCart")]
+        public async Task<ResponseDto> RemoveFromCart([FromBody] int cartDetailsId)
         {
             try
             {
@@ -130,6 +130,30 @@ namespace Mango.Services.ShoppingCartAPI.Controllers
             return _response;
         }
 
+        [HttpPost("RemoveCart")]
+        public async Task<ResponseDto> RemoveCart([FromBody] int CartHeaderId)
+        {
+            try
+            {
+                CartHeader cartHeader = await _db.CartHeaders
+                    .FirstAsync(u => u.CartHeaderId == CartHeaderId);
+
+                _db.CartHeaders.Remove(cartHeader);
+
+                _db.CartDetails.RemoveRange(_db.CartDetails.Where(u => u.CartHeaderId == cartHeader.CartHeaderId));
+
+                await _db.SaveChangesAsync();
+
+                _response.Result = true;
+            }
+            catch (Exception ex)
+            {
+
+                _response.IsSuccess = false;
+                _response.DisplayMessage = ex.Message;
+            }
+            return _response;
+        }
         [HttpGet("GetCart/{userId}")]
         public async Task<ResponseDto> GetCart(string userId)
         {

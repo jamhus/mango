@@ -47,6 +47,16 @@ namespace Mango.Web.Services
             {
                 ApiType = SD.ApiType.POST,
                 Data = cartDetailsId,
+                Url = SD.ShoppingCartApiBase + "/api/cart/RemoveFromCart",
+            });
+        }
+
+        public async Task<ResponseDto?> RemoveCartAsync(int cartHeaderId)
+        {
+            return await _baseService.SendAsync(new RequestDto()
+            {
+                ApiType = SD.ApiType.POST,
+                Data = cartHeaderId,
                 Url = SD.ShoppingCartApiBase + "/api/cart/RemoveCart",
             });
         }

@@ -35,6 +35,8 @@ namespace Mango.Web.Controllers
                 OrderHeaderDto orderHeaderDto = JsonConvert.DeserializeObject<OrderHeaderDto>(Convert.ToString(response.Result)!);
                 if (orderHeaderDto.Status == SD.Status_Approved)
                 {
+                    CartDto cartDto = await LoadCartByUserIdAsync();
+                    _cartService.RemoveCartAsync(cartDto.CartHeader.CartHeaderId);
                     return View(orderId);
                 }
             }

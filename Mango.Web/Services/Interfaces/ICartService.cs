@@ -7,6 +7,8 @@ namespace Mango.Web.Services.Interfaces
         Task<ResponseDto?> GetCartByUserIdAsync(string userId);
         Task<ResponseDto?> UpsertCartAsync(CartDto cartDto);
         Task<ResponseDto?> RemoveFromCartAsync(int cartDetailsId);
+        Task<ResponseDto?> RemoveCartAsync(int CartHeaderId);
+
         Task<ResponseDto?> ApplyCouponAsync(CartDto cartDto);
         Task<ResponseDto?> EmailCartAsync(CartDto cartDto);
     }

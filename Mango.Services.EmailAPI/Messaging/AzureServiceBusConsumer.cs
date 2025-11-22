@@ -27,8 +27,8 @@ namespace Mango.Services.EmailAPI.Messaging
             ServiceBusConnectionString = _configuration.GetValue<string>("ServiceBusConnectionString");
             EmailCartQueue = _configuration.GetValue<string>("TopicAndQueueNames:EmailShoppingCartQueue");
             EmailRegistrationQueue = _configuration.GetValue<string>("TopicAndQueueNames:EmailUserRegisteredQueue");
-            OrderCreatedTopic = _configuration.GetValue<string>("TopicsAndQueueNames:OrderCreatedTopic");
-            OrderCreatedEmailSubscription = _configuration.GetValue<string>("TopicsAndQueueNames:OrderCreatedEmailSubscription");
+            OrderCreatedTopic = _configuration.GetValue<string>("TopicAndQueueNames:OrderCreatedTopic");
+            OrderCreatedEmailSubscription = _configuration.GetValue<string>("TopicAndQueueNames:OrderCreatedEmailSubscription");
 
             var client = new ServiceBusClient(ServiceBusConnectionString);
 
@@ -50,6 +50,7 @@ namespace Mango.Services.EmailAPI.Messaging
 
 
             _EmailOrderProcessor.ProcessMessageAsync += OnOrderCreatedRecivedReceived;
+            _EmailOrderProcessor.ProcessErrorAsync += ErrorHandler;
             await _EmailOrderProcessor.StartProcessingAsync();
         }
 
