@@ -1,0 +1,39 @@
+[
+  {
+    "Name": "TheWholeDamnThing",
+    "Projects": [
+      {
+        "Path": "Mango.Services.CouponAPI\\Mango.Services.CouponAPI.csproj",
+        "Action": "Start"
+      },
+      {
+        "Path": "Mango.Web\\Mango.Web.csproj",
+        "Action": "Start"
+      },
+      {
+        "Path": "AuthAPI\\Mango.Services.AuthAPI.csproj",
+        "Action": "Start"
+      },
+      {
+        "Path": "Mango.Services.ProductAPI\\Mango.Services.ProductAPI.csproj",
+        "Action": "Start"
+      },
+      {
+        "Path": "Mango.Services.ShopingCartAPI\\Mango.Services.ShoppingCartAPI.csproj",
+        "Action": "Start"
+      },
+      {
+        "Path": "Mango.Services.EmailAPI\\Mango.Services.EmailAPI.csproj",
+        "Action": "Start"
+      },
+      {
+        "Path": "Mango.Services.OrderAPI\\Mango.Services.OrderAPI.csproj",
+        "Action": "Start"
+      },
+      {
+        "Path": "Mango.Services.RewardAPI\\Mango.Services.RewardAPI.csproj",
+        "Action": "Start"
+      }
+    ]
+  }
+]

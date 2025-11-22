@@ -1,11 +1,11 @@
 ﻿using AutoMapper;
+using Mango.MessageBus;
 using Mango.Services.OrderAPI.Data;
 using Mango.Services.OrderAPI.Models;
 using Mango.Services.OrderAPI.Models.Dtos;
 using Mango.Services.OrderAPI.Services.Interfaces;
 using Mango.Services.OrderAPI.Utility;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Stripe;
@@ -19,18 +19,21 @@ namespace Mango.Services.OrderAPI.Controllers
     public class OrderAPIController : ControllerBase
     {
         private readonly AppDbContext _db;
-        private readonly IProductService _productService;
+        private readonly IConfiguration _configuration;
         private readonly IMapper _mapper;
+        private readonly IMessageBus _messageBus;
         private readonly ResponseDto _response;
 
         public OrderAPIController(
             AppDbContext db,
-            IProductService productService,
-            IMapper mapper)
+            IConfiguration configuration,
+            IMapper mapper,
+            IMessageBus messageBus)
         {
             _db = db;
-            _productService = productService;
+            _configuration = configuration;
             _mapper = mapper;
+            _messageBus = messageBus;
             _response = new ResponseDto();
         }
 
@@ -99,10 +102,10 @@ namespace Mango.Services.OrderAPI.Controllers
                     options.LineItems.Add(lineItem);
                 }
 
-                if(requestDto.OrderHeader.Discount > 0)
+                if (requestDto.OrderHeader.Discount > 0)
                 {
                     options.Discounts = Discounts;
-                }   
+                }
 
                 var service = new SessionService();
                 Session session = service.Create(options);
@@ -144,6 +147,14 @@ namespace Mango.Services.OrderAPI.Controllers
                     orderHeader.PaymentIntentId = paymentIntent.Id;
                     await _db.SaveChangesAsync();
                 }
+
+                RewardDto rewardDto = new RewardDto
+                {
+                    UserId = orderHeader.UserId,
+                    OrderId = orderHeader.OrderHeaderId,
+                    RewardAmount = (int)(orderHeader.OrderTotal)
+                };
+                _messageBus.PublishMessage(rewardDto, _configuration["TopicAndQueueNames:OrderCreatedTopic"]);
 
                 _response.Result = _mapper.Map<OrderHeaderDto>(orderHeader);
 
