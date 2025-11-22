@@ -76,13 +76,25 @@ namespace Mango.Services.CouponAPI.Controllers
 
         [HttpPost]
         [Authorize(Roles = "ADMIN")]
-        public async Task<ResponseDto> Create([FromBody] CouponDto coupon)
+        public async Task<ResponseDto> Create([FromBody] CouponDto couponDto)
         {
             try
             {
-                _db.Coupons.Add(_mapper.Map<Coupon>(coupon));
+                _db.Coupons.Add(_mapper.Map<Coupon>(couponDto));
                 await _db.SaveChangesAsync();
-                _response.Result = _mapper.Map<CouponDto>(coupon);
+
+                var options = new Stripe.CouponCreateOptions 
+                { 
+                    Name = couponDto.CouponCode,
+                    AmountOff = (long)(couponDto.DiscountAmount * 100),
+                    Currency = "usd",
+                    Id = couponDto.CouponCode,
+                };
+
+                var service = new Stripe.CouponService();
+                Stripe.Coupon stripeCoupon = service.Create(options);
+
+                _response.Result = _mapper.Map<CouponDto>(couponDto);
             }
             catch (Exception ex)
             {
@@ -102,6 +114,19 @@ namespace Mango.Services.CouponAPI.Controllers
                 _db.Coupons.Update(coupon);
                 await _db.SaveChangesAsync();
                 _response.Result = _mapper.Map<CouponDto>(coupon);
+
+                var service = new Stripe.CouponService();
+                await service.DeleteAsync(coupon.CouponCode);
+                var options = new Stripe.CouponCreateOptions
+                {
+                    Name = couponDto.CouponCode,
+                    AmountOff = (long)(couponDto.DiscountAmount * 100),
+                    Currency = "usd",
+                    Id = couponDto.CouponCode,
+                };
+                Stripe.Coupon stripeCoupon = service.Create(options);
+
+
             }
             catch (Exception ex)
             {
@@ -121,6 +146,9 @@ namespace Mango.Services.CouponAPI.Controllers
                 Coupon coupon = await _db.Coupons.FirstAsync(c => c.CouponId == id);
                 _db.Coupons.Remove(coupon);
                 await _db.SaveChangesAsync();
+
+                var service = new Stripe.CouponService();
+                Stripe.Coupon stripeCoupon = service.Delete(coupon.CouponCode);
             }
             catch (Exception ex)
             {

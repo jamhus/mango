@@ -1,5 +1,6 @@
 ﻿using Mango.Web.Models;
 using Mango.Web.Services.Interfaces;
+using Mango.Web.Utility;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
@@ -28,6 +29,15 @@ namespace Mango.Web.Controllers
         [Authorize]
         public async Task<IActionResult> Confirmation(int orderId)
         {
+            var response = await _orderService.CheckPaymentStatus(orderId);
+            if (response != null && response.IsSuccess)
+            {
+                OrderHeaderDto orderHeaderDto = JsonConvert.DeserializeObject<OrderHeaderDto>(Convert.ToString(response.Result)!);
+                if (orderHeaderDto.Status == SD.Status_Approved)
+                {
+                    return View(orderId);
+                }
+            }
             return View(orderId);
         }
 
@@ -51,8 +61,20 @@ namespace Mango.Web.Controllers
             if (response != null && response.IsSuccess)
             {
                 // get stripe session id and redirect to stripe payment page
+                StripeRequestDto stripeRequest = new StripeRequestDto
+                {
+                    OrderHeader = orderHeaderDto,
+                    ApprovedUrl = Url.Action("Confirmation", "Cart", new { orderId = orderHeaderDto.OrderHeaderId }, Request.Scheme)!,
+                    CancelUrl = Url.Action("Checkout", "Cart", null, Request.Scheme)!
+                };
+                var stripeResponse = await _orderService.CreateStripeSesstion(stripeRequest);
+                StripeRequestDto responseDto = JsonConvert.DeserializeObject<StripeRequestDto>(Convert.ToString(stripeResponse.Result)!);
+                if (stripeResponse != null && stripeResponse.IsSuccess)
+                {
+                    Response.Headers.Add("Location", responseDto.StripeSesstionUrl!);
+                }
             }
-            return View(cart);
+            return new StatusCodeResult(303);
         }
 
         public async Task<IActionResult> Remove(int cartDetailsId)
@@ -113,7 +135,7 @@ namespace Mango.Web.Controllers
             var response = await _cartService.GetCartByUserIdAsync(userId!);
             if (response != null && response.IsSuccess && response.Result != null)
             {
-                return Newtonsoft.Json.JsonConvert.DeserializeObject<CartDto>(Convert.ToString(response.Result)!);
+                return JsonConvert.DeserializeObject<CartDto>(Convert.ToString(response.Result)!);
             }
             return null;
         }

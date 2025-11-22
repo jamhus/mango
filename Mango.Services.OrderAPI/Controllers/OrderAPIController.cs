@@ -7,6 +7,9 @@ using Mango.Services.OrderAPI.Utility;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Stripe;
+using Stripe.Checkout;
 
 namespace Mango.Services.OrderAPI.Controllers
 {
@@ -51,6 +54,104 @@ namespace Mango.Services.OrderAPI.Controllers
             {
 
                 _response.DisplayMessage = ex.Message;
+                _response.IsSuccess = false;
+            }
+            return _response;
+        }
+
+        [Authorize]
+        [HttpPost("CreateStripeSession")]
+        public async Task<ResponseDto> CreateStripeSession([FromBody] StripeRequestDto requestDto)
+        {
+            try
+            {
+                var options = new SessionCreateOptions
+                {
+                    SuccessUrl = requestDto.ApprovedUrl,
+                    CancelUrl = requestDto.CancelUrl,
+                    LineItems = new List<SessionLineItemOptions>(),
+                    Mode = "payment",
+                };
+
+                var Discounts = new List<SessionDiscountOptions>()
+                {
+                    new SessionDiscountOptions
+                    {
+                        Coupon = requestDto.OrderHeader.CouponCode
+                    }
+                };
+
+                foreach (var item in requestDto.OrderHeader.OrderDetails)
+                {
+                    var lineItem = new SessionLineItemOptions
+                    {
+                        PriceData = new SessionLineItemPriceDataOptions
+                        {
+                            UnitAmount = (long)(item.Price * 100),
+                            Currency = "usd",
+                            ProductData = new SessionLineItemPriceDataProductDataOptions
+                            {
+                                Name = item.ProductName,
+                            },
+                        },
+                        Quantity = item.Count,
+                    };
+                    options.LineItems.Add(lineItem);
+                }
+
+                if(requestDto.OrderHeader.Discount > 0)
+                {
+                    options.Discounts = Discounts;
+                }   
+
+                var service = new SessionService();
+                Session session = service.Create(options);
+                requestDto.StripeSesstionUrl = session.Url;
+
+                OrderHeader orderHeader = await _db.OrderHeaders.FindAsync(requestDto.OrderHeader.OrderHeaderId);
+                orderHeader.StripeSessionId = session.Id;
+                await _db.SaveChangesAsync();
+
+                _response.Result = requestDto;
+
+            }
+            catch (Exception ex)
+            {
+
+                _response.DisplayMessage = "Payment failed";
+                _response.IsSuccess = false;
+            }
+            return _response;
+        }
+
+        [Authorize]
+        [HttpPost("CheckPaymentStatus")]
+        public async Task<ResponseDto> CheckPaymentStatus([FromBody] int orderHeaderId)
+        {
+            try
+            {
+                OrderHeader orderHeader = await _db.OrderHeaders.FirstAsync(o => o.OrderHeaderId == orderHeaderId);
+
+                var service = new SessionService();
+                Session session = service.Get(orderHeader.StripeSessionId);
+
+                var paymentIntentService = new PaymentIntentService();
+                PaymentIntent paymentIntent = paymentIntentService.Get(session.PaymentIntentId);
+
+                if (paymentIntent.Status.ToLower() == "succeeded")
+                {
+                    orderHeader.Status = SD.Status_Approved;
+                    orderHeader.PaymentIntentId = paymentIntent.Id;
+                    await _db.SaveChangesAsync();
+                }
+
+                _response.Result = _mapper.Map<OrderHeaderDto>(orderHeader);
+
+            }
+            catch (Exception ex)
+            {
+
+                _response.DisplayMessage = "Payment failed";
                 _response.IsSuccess = false;
             }
             return _response;
