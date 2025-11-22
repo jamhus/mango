@@ -2,6 +2,7 @@
 using Mango.Web.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
 using System.IdentityModel.Tokens.Jwt;
 
 namespace Mango.Web.Controllers
@@ -9,10 +10,12 @@ namespace Mango.Web.Controllers
     public class CartController : Controller
     {
         private readonly ICartService _cartService;
+        private readonly IOrderService _orderService;
 
-        public CartController(ICartService cartService)
+        public CartController(ICartService cartService,IOrderService orderService)
         {
             _cartService = cartService;
+            _orderService = orderService;
         }
 
         [Authorize]
@@ -22,15 +25,34 @@ namespace Mango.Web.Controllers
             return View(cartDto);
         }
 
-        private async Task<CartDto?> LoadCartByUserIdAsync()
+        [Authorize]
+        public async Task<IActionResult> Confirmation(int orderId)
         {
-            var userId = User.Claims.Where(u => u.Type == "sub")?.FirstOrDefault()?.Value;
-            var response = await _cartService.GetCartByUserIdAsync(userId!);
-            if (response != null && response.IsSuccess && response.Result != null)
+            return View(orderId);
+        }
+
+        [Authorize]
+        public async Task<IActionResult> Checkout()
+        {
+            CartDto cartDto = await LoadCartByUserIdAsync();
+            return View(cartDto);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> Checkout(CartDto cartDto)
+        {
+            CartDto cart = await LoadCartByUserIdAsync();
+            cart.CartHeader.PhoneNumber = cartDto.CartHeader.PhoneNumber;
+            cart.CartHeader.Email = cartDto.CartHeader.Email;
+            cart.CartHeader.Name = cartDto.CartHeader.Name;
+
+            var response = await _orderService.CreateOrderAsync(cart);
+            OrderHeaderDto orderHeaderDto = JsonConvert.DeserializeObject<OrderHeaderDto>(Convert.ToString(response.Result));
+            if (response != null && response.IsSuccess)
             {
-                return Newtonsoft.Json.JsonConvert.DeserializeObject<CartDto>(Convert.ToString(response.Result)!);
+                // get stripe session id and redirect to stripe payment page
             }
-            return null;
+            return View(cart);
         }
 
         public async Task<IActionResult> Remove(int cartDetailsId)
@@ -83,6 +105,17 @@ namespace Mango.Web.Controllers
                 return RedirectToAction(nameof(Index));
             }
             return View();
+        }
+
+        private async Task<CartDto?> LoadCartByUserIdAsync()
+        {
+            var userId = User.Claims.Where(u => u.Type == "sub")?.FirstOrDefault()?.Value;
+            var response = await _cartService.GetCartByUserIdAsync(userId!);
+            if (response != null && response.IsSuccess && response.Result != null)
+            {
+                return Newtonsoft.Json.JsonConvert.DeserializeObject<CartDto>(Convert.ToString(response.Result)!);
+            }
+            return null;
         }
     }
 }
